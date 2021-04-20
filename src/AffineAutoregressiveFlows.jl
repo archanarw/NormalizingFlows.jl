@@ -97,3 +97,4 @@ function expected_pdf(data, p_u, A)
     t = f(A, τ, data)
     return pdf(p_u, t)*abs(det(j))
 end
+
