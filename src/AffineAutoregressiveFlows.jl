@@ -25,7 +25,7 @@ end
 
 function Conditioner(rng::AbstractRNG, K::Integer)
     m = rand(rng, K)
-    mask = lower_ones(K)
+    mask = lower_ones(Float64, K)
     m = m.*mask
     Conditioner(m, rand(rng, K))
 end
