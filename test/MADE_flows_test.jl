@@ -44,6 +44,7 @@ end
 
 for i in 1:20
     NormalizingFlows.train!(ps, train_loader, pᵤ, opt, model)
+    println(i)
 end
 
 s = NormalizingFlows.sample(pᵤ, model[8])

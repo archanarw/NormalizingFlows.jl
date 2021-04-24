@@ -1,7 +1,7 @@
 using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
 import Flux.params
 
-export train!, τ, inverse_τ, Conditioner, sample, expected_pdf, AffineLayer, f, lower_ones
+export train!, τ, inverse_τ, Conditioner, sample, expected_pdf, AffineLayer, f
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
@@ -9,7 +9,7 @@ export train!, τ, inverse_τ, Conditioner, sample, expected_pdf, AffineLayer, f
 inverse_τ(z,h) = inv(exp(h.α[1]))*z - h.β/exp(h.α)
 
 "Returns lower triangular square matrix of size k whose values are 1"
-function lower_ones(k::T) where T <: Real
+function lower_ones(T, k::Integer)
     a = Array{T,2}(undef, k, k)
     [a[i,j] = i < j ? zero(T) : one(T) for i = 1:k, j = 1:k]
 end
