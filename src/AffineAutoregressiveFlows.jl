@@ -1,7 +1,7 @@
-using Flux, Distributions, ForwardDiff, LinearAlgebra
+using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
 import Flux.params
 
-export train, τ, inverse_τ, Conditioner, sample, expected_pdf, affinelayer, f
+export train!, τ, inverse_τ, Conditioner, Sample, expected_pdf, AffineLayer, f
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
@@ -9,19 +9,9 @@ export train, τ, inverse_τ, Conditioner, sample, expected_pdf, affinelayer, f
 inverse_τ(z,h) = inv(exp(h.α[1]))*z - h.β/exp(h.α)
 
 "Returns lower triangular square matrix of size k whose values are 1"
-function lower_ones(m::Integer, n::Integer)
-    k = min(m,n)
-    a = [[1] zeros(k-1)']
-    for i in 2:k
-        v = hcat(ones(i)', zeros(k-i)')
-        a = vcat(a, v)
-    end
-    if(m<n)
-        a = hcat(a, zeros(m, n-m))
-    elseif(m>n)
-        a = vcat(a, ones(m-n, n))
-    end
-    return a
+function lower_ones(k::T) where T <: Real
+    a = Array{T,2}(undef, k, k)
+    [a[i,j] = i < j ? zero(T) : one(T) for i = 1:k, j = 1:k]
 end
 
 # Implementing the conditioner using Masked Autoregressive flows
@@ -33,67 +23,79 @@ struct Conditioner
     b #Vector of size D
 end
 
-function Conditioner(K::Integer, L::Integer)
-    m = rand(L,K)
-    mask = lower_ones(L,K)
+function Conditioner(rng::AbstractRNG, K::Integer)
+    m = rand(rng, K)
+    mask = lower_ones(K)
     m = m.*mask
-    Conditioner(m, rand(L))
+    Conditioner(m, rand(rng, K))
 end
+
+Conditioner(K::Integer) = Conditioner(Random.GLOBAL_RNG, K)
 
 (c::Conditioner)(z) = s.W*z .+ s.b
 
-struct affinelayer
+struct AffineLayer
     c::Conditioner
 end
 
-function f(A::affinelayer, transform, z)
-    # l, k = size(A.c.W)
-    # T = [transform(z[1,j],(α = A.c.W[j,1], β = A.c.b[j])) for j in 1:l]'
-    # for i in 2:k
-    #     t = [transform(z[i,j],(α = A.c.W[j,i], β = A.c.b[j])) for j in 1:l]'
-    #     T = vcat(T, t)
-    # end
-    # return T
+function f(A::AffineLayer, transform, z)
     return [transform(z[i], (α = A.c.W[i,i], β = A.c.b[i])) for i in 1:length(z)]
 end
 
-Flux.params(m::affinelayer) = Flux.params(m.c.W, m.c.b)
+(A::AffineLayer)(z) = f(A,τ,z)
 
-(A::affinelayer)(z) = f(A,τ,z)
+"""
+`train!(rng::AbstractRNG, ps, data, p_u, opt, model)`
 
-function train(ps, data, p_u, opt, model)
+# Inputs - 
+- `rng`
+- `ps`: Parameters of the conditioner
+- `data` : The training data
+- `pᵤ` : Base distribution
+- `opt` : Optimizer
+- `model` : AffineLayer
+"""
+function train!(rng::AbstractRNG, ps, data, pᵤ, opt, model)
     for (x,y) in data
-        u′ = model[Int(y[1]+1)](x)
-        u = rand(p_u, size(u′))
-        g = gradient(ps[Int(y[1]+1)]) do
-            Flux.Losses.kldivergence(u′, u)
+        u = rand(rng, pᵤ, size(x))
+        g = gradient(Flux.params(ps[Int(y[1]+1)][1], ps[Int(y[1]+1)][2])) do
+            Flux.Losses.kldivergence(abs.(model[Int(y[1]+1)](x)), abs.(u))
         end
-        Flux.update!(opt, ps[Int(y[1]+1)], g)
+        # Flux.update!(opt, ps[Int(y[1]+1)], g)
+        ps[Int(y[1]+1)] = Flux.params(ps[Int(y[1]+1)] .+ (0.001 .* g))
+        model[Int(y[1]+1)] = AffineLayer(Conditioner(ps[Int(y[1]+1)][1], ps[Int(y[1]+1)][2]))
     end
 end
 
-# function train(ps, data, p_u, opt, m)
-#     for (x,y) in data
-#         u′ = m(x)
-#         u = rand(p_u, size(u′))
-#         g = gradient(ps) do
-#             Flux.Losses.kldivergence(u′,u)
-#         end
-#         Flux.update!(opt, ps, g)
-#     end
-# end
+train!(ps, data, pᵤ, opt, model) = train!(Random.GLOBAL_RNG, ps, data, pᵤ, opt, model)
 
 # Sampling from the model
-function sample(p_u, A)
+"""
+`sample(pᵤ, A)`
+# Inputs - 
+- pᵤ : Base distribution
+- A : Affine layer
+"""
+function sample(pᵤ, A)
     l = size(A.c.b)
-    u = rand(p_u, l)
+    u = rand(pᵤ, l)
     return f(A, inverse_τ, u)
 end
 
 # pdf of the distribution after applying transform
-"p_x = p_u(T^-1(x))|det J_T^-1(x)|"
-function expected_pdf(data, p_u, A)
-    j = sum(log.(abs.(diag(A.c.W))))
-    t = f(A, τ, data)
-    return pdf(p_u, t)*abs(det(j))
+#p_x = p_u(T^-1(x))|det J_T^-1(x)|
+"""
+`expected_pdf(data, p_u, A)`
+
+# Inputs 
+- `z` : Value whose probability density is estimated
+- `pᵤ` : Base distribution
+- A : Affine layer
+
+# Returns the probability density of `z` wrt to the distribution given by A
+"""
+function expected_pdf(z, pᵤ, A)
+    j = sum(log.(abs.(diag(A.c.W)))) #Jacobian
+    t = f(A, τ, z)
+    return pdf(pᵤ, t)*abs(det(j))
 end

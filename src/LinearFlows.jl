@@ -1,23 +1,40 @@
-using Flux, Distributions
+using Flux, Distributions, Random
 using LinearAlgebra
 
-#Multiplying with same P will undo the permutation
-# function permutation_layer(m, n)
-#     k = m
-#     p = Array(I(k))
-#     r = rand(1:k,2)
-#     p_ = zeros(k)'
-#     for i in 1:k
-#         if i == r[1]
-#             p_ = vcat(p_, p[r[2],:]')
-#         elseif i == r[2]
-#             p_ = vcat(p_, p[r[1],:]')
-#         else
-#             p_ = vcat(p_, p[i,:]')
-#         end
-#     end
-#     return p_[2:end,:]
-# end
+export train_glow!, Actnorm, affinecouplinglayer, sample_glow, glow
+
+τ(z, h) = exp(h.α[1])*z + h.β
+
+function lower_ones(k::T) where T <: Real
+    a = Array{T,2}(undef, k, k)
+    [a[i,j] = i < j ? zero(T) : one(T) for i = 1:k, j = 1:k]
+end
+
+struct Conditioner
+    W #DXD matrix
+    b #Vector of size D
+end
+
+function Conditioner(rng::AbstractRNG, K::Integer)
+    m = rand(rng, K)
+    mask = lower_ones(K)
+    m = m.*mask
+    Conditioner(m, rand(rng, K))
+end
+
+Conditioner(K::Integer) = Conditioner(Random.GLOBAL_RNG, K)
+
+(c::Conditioner)(z) = s.W*z .+ s.b
+
+struct AffineLayer
+    c::Conditioner
+end
+
+function f(A::AffineLayer, transform, z)
+    return [transform(z[i], (α = A.c.W[i,i], β = A.c.b[i])) for i in 1:length(z)]
+end
+
+(A::AffineLayer)(z) = f(A,τ,z)
 
 # GLOW has 3 layers:
 # First - Actnorm(Autoregressive layer with batch normalization)
@@ -27,6 +44,7 @@ struct Actnorm
     m
     sd
 end
+
 function Actnorm(data)
     channels = size(data, ndims(data))
     # m = [mean(data[:,:,i,:]) for i in 1:channels]
@@ -38,7 +56,7 @@ end
 
 (AN::Actnorm)(data) = (data .- AN.m)/AN.sd
 
-function affinecouplinglayer(z, A::affinelayer)
+function affinecouplinglayer(z, A::AffineLayer)
     D = size(z,1)
     d = div(D,2)
     z′ = z[1:d]
@@ -47,14 +65,14 @@ end
 
 #Actnorm before glow
 #glow includes permutation and affine coupling
-function glow(channels, A::affinelayer)
+function glow(channels, A::AffineLayer)
     conv1x1 = Flux.Conv((1,1), channels => channels, relu)
     # Flatten after this
     coupling = z -> affinecouplinglayer(z,A)
     return Chain(conv1x1, flatten, coupling, softmax)
 end
 
-function train_glow(ps, data, p_u, opt, model, AN)
+function train_glow!(ps, data, p_u, opt, model, AN)
     data = AN(data)
     for (x,y) in data
         u = pdf(p_u, abs.(model[Int(y[1]+1)](x)))
@@ -69,4 +87,3 @@ function sample_glow(p_u, m, size)
     u = rand(p_u, size)
     return m(u)
 end
-
