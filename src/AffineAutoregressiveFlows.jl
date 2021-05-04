@@ -1,7 +1,7 @@
 using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
 import Flux.params
 
-export train!, τ, inverse_τ, Conditioner, sample, expected_pdf, AffineLayer, f
+export Conditioner, AffineLayer, params, sample, expected_pdf
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
@@ -17,20 +17,20 @@ end
 # Implementing the conditioner using Masked Autoregressive flows
 # h_i = c(s_i) where s_i is vector of z_i where i < D and h1 = c(s1), s1 is the initial condition
 # h_i = {α_i, β_i}, where both are real.
-# Conditioner(feedforward neural network):z -> h
+"Conditioner is a feedforward neural network such that  Conditioner: z -> h"
 struct Conditioner
     W #DXD matrix
     b #Vector of size D
 end
 
-function Conditioner(rng::AbstractRNG, K::Integer)
-    m = rand(rng, K)
-    mask = lower_ones(Float64, K)
+function Conditioner(rng::AbstractRNG, K::Integer, T)
+    m::Array{T,2} = rand(rng, K, K)
+    mask = lower_ones(T, K)
     m = m.*mask
     Conditioner(m, rand(rng, K))
 end
 
-Conditioner(K::Integer) = Conditioner(Random.GLOBAL_RNG, K)
+Conditioner(K::Integer) = Conditioner(Random.GLOBAL_RNG, K, Float64)
 
 (c::Conditioner)(z) = s.W*z .+ s.b
 
@@ -44,43 +44,23 @@ end
 
 (A::AffineLayer)(z) = f(A,τ,z)
 
-"""
-`train!(rng::AbstractRNG, ps, data, p_u, opt, model)`
-
-# Inputs - 
-- `rng`
-- `ps`: Parameters of the conditioner
-- `data` : The training data
-- `pᵤ` : Base distribution
-- `opt` : Optimizer
-- `model` : AffineLayer
-"""
-function train!(rng::AbstractRNG, ps, data, pᵤ, opt, model)
-    for (x,y) in data
-        u = rand(rng, pᵤ, size(x))
-        g = gradient(Flux.params(ps[Int(y[1]+1)][1], ps[Int(y[1]+1)][2])) do
-            Flux.Losses.kldivergence(abs.(model[Int(y[1]+1)](x)), abs.(u))
-        end
-        # Flux.update!(opt, ps[Int(y[1]+1)], g)
-        ps[Int(y[1]+1)] = Flux.params(ps[Int(y[1]+1)] .+ (0.001 .* g))
-        model[Int(y[1]+1)] = AffineLayer(Conditioner(ps[Int(y[1]+1)][1], ps[Int(y[1]+1)][2]))
-    end
-end
-
-train!(ps, data, pᵤ, opt, model) = train!(Random.GLOBAL_RNG, ps, data, pᵤ, opt, model)
+params(A::AffineLayer) = Flux.params(A.c.W,A.c.b)
 
 # Sampling from the model
 """
 `sample(pᵤ, A)`
 # Inputs - 
-- pᵤ : Base distribution
+- pᵤ : Base distribution which may be from the package Distributions
+or any distribution which can be sampled using `rand`
 - A : Affine layer
 """
-function sample(pᵤ, A)
+function sample(rng::AbstractRNG, pᵤ, A::AffineLayer)
     l = size(A.c.b)
-    u = rand(pᵤ, l)
+    u = rand(rng, pᵤ, l)
     return f(A, inverse_τ, u)
 end
+
+sample(pᵤ, A) = sample(Random.GLOBAL_RNG, pᵤ, A)
 
 # pdf of the distribution after applying transform
 #p_x = p_u(T^-1(x))|det J_T^-1(x)|
@@ -89,7 +69,8 @@ end
 
 # Inputs 
 - `z` : Value whose probability density is estimated
-- `pᵤ` : Base distribution
+- `pᵤ` : Base distribution which may be from the package Distributions
+or any distribution which can be sampled using `rand`
 - A : Affine layer
 
 # Returns the probability density of `z` wrt to the distribution given by A

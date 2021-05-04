@@ -1,22 +1,15 @@
 using NormalizingFlows, Flux
 using MLDatasets, Plots
-using Distributions
+using Distributions, Test
 
-# d = Flux.flatten(randn(3,2,10))
-# labels = zeros(10)
-# data = Flux.Data.DataLoader((d,labels))
-# c = Conditioner(6)
-# model = []
-# model = vcat(model, affinelayer(c))
-# opt = Flux.ADAM(0.001)
-# p_u = Uniform(0,1)
-# ps = Flux.Params[]
-# ps = vcat(ps, Flux.params(c.W,c.b))
-# for i in 1:30
-#     train(ps, data, p_u, opt)
-# end
-# s = sample(p_u, model[1])
-# expected_pdf(s, p_u, model[1])
+using Random
+rng = MersenneTwister(0)
+
+#Conditioner
+@test size(Conditioner(rng, 3, Float32).W) == (3,3)
+@test size(Conditioner(rng, 3, Float32).b) == (3,)
+@test typeof(Conditioner(rng, 3, Float32).W) == Array{Float32,2}
+
 
 xtrain, ytrain = MLDatasets.MNIST.traindata(Float32);
 xtest, ytest = MLDatasets.MNIST.testdata(Float32);
@@ -24,28 +17,38 @@ xtest, ytest = MLDatasets.MNIST.testdata(Float32);
 xtrain = Flux.flatten(xtrain);
 xtest = Flux.flatten(xtest);
 
-# ytrain, ytest = Flux.onehotbatch(ytrain, 0:9), Flux.onehotbatch(ytest, 0:9);
-
-xtrain, ytrain = xtrain[:,1:500], ytrain[1:500];
-
 train_loader = Flux.Data.DataLoader((xtrain, ytrain));
 test_loader = Flux.Data.DataLoader((xtest, ytest));
 
-opt = Flux.ADAM(0.001)
+t = [(x,y) for (x,y) in train_loader]
+sort!(t, by = x-> x[2])
+t1 = []
+for (x,y) in t
+    if y == [1]
+        break
+    end
+    push!(t1, (x,y))
+end
+
+x_0 = t1[1][1]
+for (x,y) in t1[2:end]
+    x_0 = hcat(x_0, x)
+end
+
+opt = Flux.Descent(0.001)
 pᵤ = Uniform(0,1)
-labels = unique(ytrain)
-ps = Flux.Params[]
-model = []
-for label in sort(labels)
-    m = NormalizingFlows.AffineLayer(Conditioner(784))
-    ps = vcat(ps, Flux.params(m.c.W, m.c.b))
-    model = vcat(model, m)
+model = NormalizingFlows.AffineLayer(Conditioner(rng, 784, Float64))
+
+#AffineLayer
+@test size.(NormalizingFlows.params(model)) == [(784, 784), (784,)]
+
+for i in 1:50
+    NormalizingFlows.train!(rng, x_0, loss_kl, pᵤ, opt, model)
 end
 
-for i in 1:20
-    NormalizingFlows.train!(ps, train_loader, pᵤ, opt, model)
-    println(i)
-end
+s = NormalizingFlows.sample(rng, pᵤ, model)
 
-s = NormalizingFlows.sample(pᵤ, model[8])
-heatmap(reshape(s, 28, 28))
+#Sampling
+@test NormalizingFlows.expected_pdf(s, pᵤ, model) == 759.9282996555975.*ones(784)
+
+# heatmap(reshape(abs.(s), 28, 28))

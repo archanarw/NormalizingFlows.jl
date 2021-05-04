@@ -1,5 +1,8 @@
 using Flux, Distributions
 using LinearAlgebra
+import Flux.params
+
+export PlanarFlow, sample, params
 
 struct PlanarFlow
     v
@@ -16,17 +19,16 @@ end
 
 (P::PlanarFlow)(z) = z .+ P.v .* σ.((P.w)'*z .+ P.b)
 
-function train_planar(ps, data, p_u, opt, model)
-    for (x,y) in data
-        x′ = model[Int(y[1]+1)](rand(p_u, size(x,1)))
-        g = gradient(ps[Int(y[1]+1)]) do
-            Flux.Losses.kldivergence(x, x′)
-        end
-        Flux.update!(opt, ps[Int(y[1]+1)], g)
-    end
-end
+params(P::PlanarFlow) = Flux.params(P.v, P.w, P.b)
 
-function sample_planar(p_u, P)
-    u = rand(p_u, size(P.v))
+"""
+`sample(pᵤ, A)`
+# Inputs - 
+- pᵤ : Base distribution which may be from the package Distributions
+    or any distribution which can be sampled using `rand`
+- P : Planar flow
+"""
+function sample(pᵤ, P::PlanarFlow)
+    u = rand(pᵤ, size(P.v))
     return P(u)
 end
