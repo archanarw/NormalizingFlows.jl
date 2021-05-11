@@ -5,13 +5,10 @@ using Random, Test
 rng = MersenneTwister(0)
 
 xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-xtest, ytest = MLDatasets.MNIST.testdata(Float32)
 	
 xtrain = Flux.flatten(xtrain)
-xtest = Flux.flatten(xtest)
 
 train_loader = Flux.Data.DataLoader((xtrain, ytrain))
-test_loader = Flux.Data.DataLoader((xtest, ytest))
 
 t = [(x,y) for (x,y) in train_loader]
 sort!(t, by = x-> x[2])
@@ -30,13 +27,19 @@ end
 
 opt = Flux.ADAM(0.001)
 pᵤ = Uniform(0,1)
-model = PlanarFlow(28^2)
+model = PlanarFlow(rng, Float32, 28^2)
 
 @test size.(NormalizingFlows.params(model)) == [(784,),(784,),(784,)]
+@test all(eltype.([model.v, model.w, model.b]) .== Float32)
 
-for i in 1:50
-    train!(x_0, loss_kl, pᵤ, opt, model)
+l = Flux.Losses.crossentropy(abs.(model(rand(rng, pᵤ, 784))), abs.(xtrain[:,1]))
+
+for i in 1:20
+    train!(rng, x_0, loss_kl, pᵤ, opt, model)
 end
 
-s = NormalizingFlows.sample(pᵤ, model)
+s = NormalizingFlows.sample(rng, pᵤ, model)
+
+@test abs.(Flux.Losses.crossentropy(abs.(s), abs.(xtrain[:,1]))) < abs.(l)
+
 heatmap(reshape(abs.(s), 28, 28))
