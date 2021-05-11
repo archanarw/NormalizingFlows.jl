@@ -10,14 +10,16 @@ struct PlanarFlow
     b
 end
 
-function PlanarFlow(D)
-    v = rand(D)
-    w = rand(D)
-    b = rand(D)
+function PlanarFlow(rng::AbstractRNG, T, D)
+    v = rand(rng, T, D)
+    w = rand(rng, T, D)
+    b = rand(rng, T, D)
     return PlanarFlow(v,w,b)
 end
 
-(P::PlanarFlow)(z) = z .+ P.v .* σ.((P.w)'*z .+ P.b)
+PlanarFlow(D) = PlanarFlow(Random._GLOBAL_RNG, Float64, D)
+
+(P::PlanarFlow)(z) = P.v .* σ.((P.w)'*z .+ P.b)
 
 params(P::PlanarFlow) = Flux.params(P.v, P.w, P.b)
 
@@ -28,7 +30,9 @@ params(P::PlanarFlow) = Flux.params(P.v, P.w, P.b)
     or any distribution which can be sampled using `rand`
 - P : Planar flow
 """
-function sample(pᵤ, P::PlanarFlow)
-    u = rand(pᵤ, size(P.v))
+function sample(rng::AbstractRNG, pᵤ, P::PlanarFlow)
+    u = rand(rng, pᵤ, size(P.v))
     return P(u)
 end
+
+sample(pᵤ, P::PlanarFlow) = sample(Random._GLOBAL_RNG, pᵤ, P)
