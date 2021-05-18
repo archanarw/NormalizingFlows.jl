@@ -23,9 +23,9 @@ function train!(rng::AbstractRNG, data, loss, pᵤ, opt, model)
     ps = params(model)
     for i in 1:size(data, 2)
         x = data[:,i]
-        u = rand(rng, pᵤ, size(x))
+        u = rand(rng, pᵤ, size(x)...)
         g = gradient(ps) do
-            loss(model, x, u)
+            @show loss(model, x, u)
         end
         Flux.update!(opt, ps, g)
     end
@@ -33,12 +33,11 @@ end
 
 function train!(rng::AbstractRNG, data, loss, pᵤ, opt, model::GLOW)
     ps = params(model)
-    m = model()
     for i in 1:size(data, 4)
         x = data[:,:,:,i] |> Flux.unsqueeze(3)
         u = rand(rng, pᵤ, size(x)...)
         g = gradient(ps) do
-            loss(m, flatten(x), u)
+            loss(model, flatten(x), u)
         end
         Flux.update!(opt, ps, g)
     end
@@ -50,10 +49,11 @@ function train_labelled_data!(rng::AbstractRNG, data_loader, pᵤ, opt, model)
     train = [(x,y) for (x,y) in data_loader]
     sort!(train, by = x -> x[2])
     curr = 0
-    for (x, y) in train
+    while (curr != train[end][2]+1)
         t = []
-        for (x,y) in t
+        for (x,y) in train
             if y == [curr+1]
+                curr+=1
                 break
             end
             push!(t, (x,y))
@@ -63,8 +63,7 @@ function train_labelled_data!(rng::AbstractRNG, data_loader, pᵤ, opt, model)
             x_curr = hcat(x_curr, x_)
         end
         train!(rng, x_curr, pᵤ, opt, model[curr+1])
-        curr += 1
-    end    
+    end
 end
 
 train_labelled_data!(data_loader, pᵤ, opt, model) = train_labelled_data!(Random.GLOBAL_RNG, data_loader, pᵤ, opt, model)

@@ -18,8 +18,8 @@ function affinecouplinglayer(z, A::AffineLayer)
 end
 
 struct GLOW
-    B
     conv
+    B
     A::AffineLayer
 end
 
@@ -28,22 +28,22 @@ function GLOW(rng::AbstractRNG, T, channels, D)
     # Flatten after this
     d = div(D,2)
     A = AffineLayer(Conditioner(rng, d, T))
-    return GLOW(BatchNorm(channels), conv1x1, A)
+    return GLOW(conv1x1, BatchNorm(channels), A)
 end
 
 GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
 
 #Actnorm before glow
 #glow includes permutation and affine coupling
-function (L::GLOW)()
+function (L::GLOW)(z)
     conv1x1 = L.conv
     # Flatten after this
     A = L.A
     coupling = z -> affinecouplinglayer(z,A)
-    return Chain(L.B, conv1x1, flatten, coupling, softmax)
+    return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
 end
 
-params(L::GLOW) = Flux.params(L.B, L.conv, L.A.c.W, L.A.c.b)
+params(L::GLOW) = Flux.params(L.conv, L.B, L.A.c.W, L.A.c.b)
 
 # Sampling from the model
 """
@@ -53,9 +53,9 @@ params(L::GLOW) = Flux.params(L.B, L.conv, L.A.c.W, L.A.c.b)
 or any distribution which can be sampled using `rand`
 - L : Linear Flow
 """
-function sample(rng::AbstractRNG, pᵤ, L::GLOW)
+function sample(rng::AbstractRNG, pᵤ, channels, L::GLOW)
     l = size(L.A.c.b)
-    u = rand(rng, pᵤ, l)
+    u = rand(rng, pᵤ, l, l, channels, 1)
     return L(u)
 end
 

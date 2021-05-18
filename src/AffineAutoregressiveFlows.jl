@@ -1,7 +1,7 @@
 using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
 import Flux.params
 
-export Conditioner, AffineLayer, params, sample, expected_pdf
+export Conditioner, AffineLayer, params, sample, expected_pdf, τ, inverse_τ, f
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
