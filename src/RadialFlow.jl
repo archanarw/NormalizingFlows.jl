@@ -28,7 +28,7 @@ params(R::RadialFlow) = Flux.params(R.z₀, [R.α], [R.β])
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
     or any distribution which can be sampled using `rand`
-- P : Planar flow
+- P : Radial flow
 """
 function sample(rng::AbstractRNG, pᵤ, R::RadialFlow)
     u = rand(rng, pᵤ, size(R.z₀))
