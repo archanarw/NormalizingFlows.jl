@@ -37,6 +37,12 @@ md"###### Sampling:"
 # ╔═╡ d93f4477-d81f-4c12-b747-ee498dd89f05
 
 
+# ╔═╡ ecb2fab7-1fbb-4448-a57f-6683aaf3dbcc
+begin
+	using NormalizingFlows
+	P = PlanarFlow(4)
+end
+
 # ╔═╡ fe2ec09e-312b-4f76-809f-2c9acd2ba7cc
 begin
 	using Flux, NormalizingFlows, Distributions
@@ -73,12 +79,6 @@ begin
 
 	s = NormalizingFlows.sample(rng, pᵤ, model)
 	heatmap(reshape(abs.(s), 28, 28))
-end
-
-# ╔═╡ ecb2fab7-1fbb-4448-a57f-6683aaf3dbcc
-begin
-	using NormalizingFlows
-	P = PlanarFlow(4)
 end
 
 # ╔═╡ Cell order:
