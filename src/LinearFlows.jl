@@ -3,20 +3,31 @@ import Flux.params
 
 export affinecouplinglayer, sample, GLOW
 
-# GLOW has 3 layers:
-# First - Actnorm(Autoregressive layer with batch normalization)
-# Second - Conv1x1 layer (for ease of finding inverse : W = PLU, 
-#                       where P is a fixed permutation layer, L and U are learnt)
-# Third - Coupling layer
-
+"""
+Coupling layer:
+It transforms the input as:
+zᵢ′ = zᵢ for i < d
+zᵢ′ = A(zᵢ) for i >= d where d = D/2
+# Inputs - 
+- z : input from trainig data
+- A : AffineLayer of the required size d, i.e., D/2 where
+    D is the size of input data
+"""
 function affinecouplinglayer(z, A::AffineLayer)
     D = size(z,1)
     d = div(D,2)
     z′ = z[1:d]
-    z′ = vcat(z′, A(z[1:d]))
+    z′ = vcat(z′, A(z[(d+1):end]))
     return z′
 end
 
+"""
+GLOW has 3 layers:
+First - Conv1x1 layer (for ease of finding inverse : W = PLU, 
+                      where P is a fixed permutation layer, L and U are learnt)
+Second - Actnorm(Autoregressive layer with batch normalization)
+Third - Coupling layer
+"""
 struct GLOW
     conv
     B
