@@ -4,10 +4,10 @@ import Flux.params
 
 export RadialFlow, sample, params
 
-struct RadialFlow
-    z₀
-    α
-    β
+struct RadialFlow{T}
+    z₀::Array{T}
+    α::T
+    β::T
 end
 
 function RadialFlow(rng::AbstractRNG, T, D)

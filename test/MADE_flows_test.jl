@@ -1,7 +1,7 @@
-using NormalizingFlows
+using NormalizingFlows, Random
 using Test
 
-
+rng = MersenneTwister(0)
 # Conditioner(rng, k, T)
 # Weight of the conditioner must be of size kxk
 # Bias must be of size k

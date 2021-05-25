@@ -1,7 +1,7 @@
 using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
-import Flux.params
+import Flux.params, Base.eltype
 
-export Conditioner, AffineLayer, params, sample, expected_pdf, τ, inverse_τ, f
+export AffineLayer, params, sample, expected_pdf, τ, inverse_τ, f, eltype
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
@@ -45,33 +45,28 @@ end
 # h_i = c(s_i) where s_i is vector of z_i where i < D and h1 = c(s1), s1 is the initial condition
 # h_i = {α_i, β_i}, where both are real.
 "Conditioner is a feedforward neural network such that  Conditioner: z -> h"
-struct Conditioner
-    W #DXD matrix
-    b #Vector of size D
+struct AffineLayer{T}
+    W::Array{T,2} #DXD matrix
+    b::Array{T,1} #Vector of size D
 end
 
-function Conditioner(rng::AbstractRNG, K::Integer, T)
+function AffineLayer(rng::AbstractRNG, K::Integer, T)
     m::Array{T,2} = rand(rng, K, K)
     mask = lower_ones(T, K)
     m = m.*mask
-    Conditioner(m, rand(rng, K))
+    AffineLayer(m, rand(rng, T, K))
 end
 
-Conditioner(K::Integer) = Conditioner(Random.GLOBAL_RNG, K, Float64)
-
-(c::Conditioner)(z) = c.W*z .+ c.b
-
-struct AffineLayer
-    c::Conditioner
-end
+AffineLayer(K::Integer) = AffineLayer(Random.GLOBAL_RNG, K, Float64)
 
 function f(A::AffineLayer, transform, z)
-    return [transform(z[i], (α = (transpose(A.c.W[:,i]))*z, β = A.c.b[i])) for i in 1:length(z)]
+    return [transform(z[i], (α = (transpose(A.W[:,i]))*z, β = A.b[i])) for i in 1:length(z)]
 end
 
 (A::AffineLayer)(z) = f(A,τ,z)
 
-params(A::AffineLayer) = Flux.params(A.c.W, A.c.b)
+params(A::AffineLayer) = Flux.params(A.W, A.b)
+eltype(A::AffineLayer) = eltype(A.b)
 
 # Sampling from the model
 """
@@ -82,7 +77,7 @@ or any distribution which can be sampled using `rand`
 - A : Affine layer
 """
 function sample(rng::AbstractRNG, pᵤ, A::AffineLayer)
-    l = size(A.c.b)
+    l = size(A.b)
     u = rand(rng, pᵤ, l)
     return A(u)
 end
@@ -103,7 +98,7 @@ or any distribution which can be sampled using `rand`
 # Returns the probability density of `z` wrt to the distribution given by A
 """
 function expected_pdf(z, pᵤ, A)
-    j = sum(log.(abs.(diag(A.c.W)))) #Jacobian
+    j = sum(log.(abs.(diag(A.W)))) #Jacobian
     t = f(A, inverse_τ, z)
     return pdf(pᵤ, t)*abs(det(j))
 end

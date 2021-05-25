@@ -8,20 +8,19 @@ using InteractiveUtils
 md"### Normalizing Flows: Linear Flows"
 
 # ╔═╡ ff85f833-8993-4f8b-a62e-e3136c4d588b
-md" z′ = Wz where W is a D×D invertible matrix that parameterizes the transformation"
+md" $z'$ = $Wz$ where $W $ is a $D×D$ invertible matrix that parameterizes the transformation"
 
 # ╔═╡ a3e7a0eb-9928-4960-93a1-85217771ac02
-md" The Jacobian of the above transformation is simply W, making the Jacobian determinant equal to det(W)"
+md" The Jacobian of the above transformation is simply W, making the Jacobian determinant equal to $det(W)$"
 
 # ╔═╡ 3c719e90-a605-472d-81e9-5406dabdad41
-md" It takes O(n³) to find determinant of W, which can be reduced to O(n) with
-W = PLU
-where P is the permutation matrix (which is fixed), L and U is learnt.
+md" It takes $O(n³)$ to find determinant of $W$, which can be reduced to $O(n)$ with
+$W = PLU$ where $P$ is the permutation matrix (which is fixed), $L$ and $U$ is learnt.
 "
 
 # ╔═╡ 6627ee55-1a22-4039-8df4-3b00a90c8a4b
 md"
-There must be 3 layers - Normalation(activation normalization), W and autoregressive coupling"
+There must be 3 layers - Normalization(activation normalization), transformation by $W$ and autoregressive coupling."
 
 # ╔═╡ 5d5fb897-bf5c-4bda-baa4-e8126bd1164c
 md" ###### ActNorm"
@@ -33,16 +32,19 @@ md" This layer is a form of data dependent initialization, it performs an affine
 md"###### Permutation layer (W)"
 
 # ╔═╡ cb3921f7-7a11-4945-90ab-364e4f77ea9c
-md" W is an invertible 1x1 convolution"
+md" $W$ is an invertible $1$x$1$ convolution layer here, which is similar to having a permutation layer."
 
 # ╔═╡ 2e8e417a-073e-46ea-890e-6e1deb453a8b
 md" ###### Coupling"
 
 # ╔═╡ 1978987e-09f6-42cf-bcd3-588574d6738f
 md"
-- z′≤d = z≤d
-- (h\_d+1, . . . , h\_D) = F(z≤d)
-- z′ᵢ = τ(zᵢ; hᵢ) for i > d."
+- $z'_{≤d} = z_{≤d}$
+- $(h_{d+1}, . . . , h_{D}) = F(z_{≤d})$
+- $z'_{i} = τ(z_{i}; h_{i}) for i > d.$"
+
+# ╔═╡ 55f64b70-d9d4-4b07-8c09-63a16215e527
+
 
 # ╔═╡ Cell order:
 # ╟─77469ac0-9aeb-11eb-3992-4b8337e3e5ff
@@ -56,3 +58,4 @@ md"
 # ╟─cb3921f7-7a11-4945-90ab-364e4f77ea9c
 # ╟─2e8e417a-073e-46ea-890e-6e1deb453a8b
 # ╟─1978987e-09f6-42cf-bcd3-588574d6738f
+# ╠═55f64b70-d9d4-4b07-8c09-63a16215e527

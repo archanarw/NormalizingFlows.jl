@@ -1,4 +1,4 @@
-using Flux, Distributions, Random
+using Flux, Distributions, Random, StatsBase
 
 export train!, loss_kl
 
@@ -23,11 +23,9 @@ function train!(rng::AbstractRNG, data, loss, pᵤ, opt, model)
     ps = params(model)
     for i in 1:size(data, 2)
         x = data[:,i]
-        u = rand(rng, pᵤ, size(x)...)
-        g = gradient(ps) do
-            @show loss(model, x, u)
-        end
-        Flux.update!(opt, ps, g)
+        u = oftype(x, rand(rng, pᵤ, size(x)...))
+        g = gradient(() -> loss(model, x, u), Flux.params(ps[:]))
+        Flux.update!(opt, ps[:], g)
     end
 end
 
@@ -70,5 +68,5 @@ train_labelled_data!(data_loader, pᵤ, opt, model) = train_labelled_data!(Rando
 
 "KL Divergence"
 function loss_kl(model, x, u)
-    Flux.Losses.kldivergence(abs.(x), abs.(model(u)))
+    oftype(x[1], StatsBase.kldivergence(abs.(x), abs.(model(u))))
 end
