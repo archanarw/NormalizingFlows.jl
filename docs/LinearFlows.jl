@@ -4,6 +4,12 @@
 using Markdown
 using InteractiveUtils
 
+# ╔═╡ a80c1858-f83d-4b96-8c2a-8a8bb908c40c
+begin
+	using NormalizingFlows
+	L = GLOW(1, 6)
+end
+
 # ╔═╡ 77469ac0-9aeb-11eb-3992-4b8337e3e5ff
 md"### Normalizing Flows: Linear Flows"
 
@@ -44,7 +50,19 @@ md"
 - $z'_{i} = τ(z_{i}; h_{i}) for i > d.$"
 
 # ╔═╡ 55f64b70-d9d4-4b07-8c09-63a16215e527
+md"##### Model: "
 
+# ╔═╡ 0b86f941-dee0-4625-b820-7977e91c9192
+md"##### Training:"
+
+# ╔═╡ 8a4134e7-2e64-434a-87f8-52c44c11ffe9
+
+
+# ╔═╡ 9f9e5557-e86e-4d7b-b1ef-598fc0f698ba
+md"##### Sampling:"
+
+# ╔═╡ f28fa39c-66ca-432b-bb99-de3084006f85
+md"`sample(pᵤ, L)` takes the base distribution and GLOW layer as inputs and outputs a sample of the density from which the input samples were generated."
 
 # ╔═╡ Cell order:
 # ╟─77469ac0-9aeb-11eb-3992-4b8337e3e5ff
@@ -58,4 +76,9 @@ md"
 # ╟─cb3921f7-7a11-4945-90ab-364e4f77ea9c
 # ╟─2e8e417a-073e-46ea-890e-6e1deb453a8b
 # ╟─1978987e-09f6-42cf-bcd3-588574d6738f
-# ╠═55f64b70-d9d4-4b07-8c09-63a16215e527
+# ╟─55f64b70-d9d4-4b07-8c09-63a16215e527
+# ╠═a80c1858-f83d-4b96-8c2a-8a8bb908c40c
+# ╟─0b86f941-dee0-4625-b820-7977e91c9192
+# ╠═8a4134e7-2e64-434a-87f8-52c44c11ffe9
+# ╟─9f9e5557-e86e-4d7b-b1ef-598fc0f698ba
+# ╟─f28fa39c-66ca-432b-bb99-de3084006f85

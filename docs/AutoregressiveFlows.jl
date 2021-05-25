@@ -38,11 +38,11 @@ begin
 
 	opt = Flux.Descent(0.0001)
 	pᵤ = Uniform(0,1)
-	model = NormalizingFlows.AffineLayer(Conditioner(rng, 784, Float32))
+	model = NormalizingFlows.AffineLayer(rng, 784, Float32)
 
-	for i in 1:10
-    	train!(rng, x_0, loss_kl, pᵤ, opt, model)
-	end
+	# for i in 1:10
+    	train!(rng, x_0[:, 1:3000], loss_kl, pᵤ, opt, model)
+	# end
 
 	s = NormalizingFlows.sample(rng, pᵤ, model)
 	heatmap(reshape(abs.(s), 28, 28))
@@ -152,15 +152,6 @@ md"###### Model"
 # ╔═╡ 32c961c5-4d11-422f-a6cd-e87b90c3069f
 md" Conditioner"
 
-# ╔═╡ b4c83fe1-5c22-4050-97cb-4d48898b6389
-md"Conditioner is a linear layer wherein $ W$ and $ b$ are updated according to the gradient. It must return $(h_{1}, ... , h_{D})$"
-
-# ╔═╡ eb93d375-26d9-4a39-9289-84b75774b4e8
-begin
-	c = Conditioner(7,7); #Lower triangular matrix, with random values
-	c.W, c.b
-end
-
 # ╔═╡ 9840535f-daba-491c-b035-c3d12a20d68e
 md"Affine Layer"
 
@@ -174,7 +165,7 @@ $τ(z_{i}, h_{i}) = α_{i}*z_{i} + β_{i}$ where $α_{i}$ must be non-zero, $h_{
 "
 
 # ╔═╡ d06a4a43-6be9-48fb-bd77-b9d989faf2e7
-A = NormalizingFlows.AffineLayer(c)
+A = NormalizingFlows.AffineLayer(5)
 
 # ╔═╡ 7ae0927c-2338-4902-9de9-fd74caa75652
 md"Values after applying tranformation to all elements -"
@@ -246,8 +237,6 @@ md"`expected_pdf(z, pᵤ, A)` takes the base distribution, affine layer and the 
 # ╟─c397b6fc-e91c-4f0a-8180-8b6bc03f79f8
 # ╟─32c961c5-4d11-422f-a6cd-e87b90c3069f
 # ╠═b9d9fc20-194d-4644-a5fb-508147d5a1d9
-# ╟─b4c83fe1-5c22-4050-97cb-4d48898b6389
-# ╠═eb93d375-26d9-4a39-9289-84b75774b4e8
 # ╟─9840535f-daba-491c-b035-c3d12a20d68e
 # ╟─2df53653-8353-4928-9245-640c3cf51d30
 # ╟─4838b626-14ae-4b2d-b6b2-88a1daa62736
