@@ -35,7 +35,7 @@ function train!(rng::AbstractRNG, data, loss, pᵤ, opt, model::GLOW)
         x = data[:,:,:,i] |> Flux.unsqueeze(3)
         u = oftype(x, rand(rng, pᵤ, size(x)...))
         g = gradient(() -> loss(model, Flux.flatten(x), u), Flux.params(ps[:]))
-        Flux.update!(opt, ps[:], g)
+        Flux.update!(opt, ps, g)
     end
 end
 

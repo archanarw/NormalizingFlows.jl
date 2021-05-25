@@ -27,7 +27,7 @@ function GLOW(rng::AbstractRNG, T, channels, D)
     conv1x1 = Flux.Conv((1,1), channels => channels, relu)
     # Flatten after this
     d = div(D,2)
-    A = AffineLayer(Conditioner(rng, d, T))
+    A = AffineLayer(rng, d, T)
     return GLOW(conv1x1, BatchNorm(channels), A)
 end
 
@@ -43,7 +43,7 @@ function (L::GLOW)(z)
     return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
 end
 
-params(L::GLOW) = Flux.params(L.conv, L.B, L.A.c.W, L.A.c.b)
+params(L::GLOW) = Flux.params(L.conv, L.B, L.A.W, L.A.b)
 
 # Sampling from the model
 """
@@ -54,7 +54,7 @@ or any distribution which can be sampled using `rand`
 - L : Linear Flow
 """
 function sample(rng::AbstractRNG, pᵤ, channels, L::GLOW)
-    l = size(L.A.c.b)
+    l = Int(sqrt(size(L.A.b, 1)*2))
     u = rand(rng, pᵤ, l, l, channels, 1)
     return L(u)
 end
