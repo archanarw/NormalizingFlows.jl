@@ -23,14 +23,14 @@ function is_lower(A)
     return true
 end
 
-@test size(Conditioner(rng, 3, Float32).W) == (3,3)
-@test size(Conditioner(rng, 3, Float32).b) == (3,)
-@test eltype(Conditioner(rng, 3, Float32).W) == Float32
-@test is_lower(Conditioner(rng, 3, Float32).W)
+@test size(AffineLayer(rng, 3, Float32).W) == (3,3)
+@test size(AffineLayer(rng, 3, Float32).b) == (3,)
+@test eltype(AffineLayer(rng, 3, Float32).W) == Float32
+@test is_lower(AffineLayer(rng, 3, Float32).W)
 
 # (A::AffineLayer)(z)
 # Must return an array of τ(zᵢ) for each element in zᵢ in z
-model = AffineLayer(Conditioner(rng, 3, Float32))
+model = AffineLayer(rng, 3, Float32)
 z = randn(rng, 3)
 @test size.(NormalizingFlows.params(model)) == [(3, 3), (3,)]
 @test size(model(z)) == size(z)
