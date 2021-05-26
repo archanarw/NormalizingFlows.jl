@@ -14,7 +14,7 @@ end
 
 @testset "Linear Flow" begin
     model = GLOW(rng, Float32, 1, 6)
-    @test size(params(model)[6]) == (3,) #Checking if the coupling layer is half the size of the input
+    @test size(NormalizingFlows.params(model)[6]) == (3,) #Checking if the coupling layer is half the size of the input
 end
 
 @testset "Radial Flow" begin
