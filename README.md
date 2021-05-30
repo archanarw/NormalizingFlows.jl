@@ -39,6 +39,7 @@ They are of the form: z' = Wz where W is a D×D invertible matrix that parameter
 * Residual Flows -
 ⁠ They are of the form: z₀ = z + g_φ(z) where g_φ is a function that outputs a D-dimensional translation vector, parameterized by φ.
 The two types of residual flows implemented are:
+
 `PlanarFlows`: Here, the function g_{φ} is a one-layer neural network with a single hidden unit:
 ```math 
 z₀ = z + vσ(wᵀz + b)
