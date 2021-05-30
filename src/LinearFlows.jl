@@ -25,8 +25,8 @@ end
 GLOW has 3 layers:
 First - Conv1x1 layer (for ease of finding inverse : W = PLU, 
                       where P is a fixed permutation layer, L and U are learnt)
-Second - Actnorm(Autoregressive layer with batch normalization)
-Third - Coupling layer
+Second - Normalization
+Third - Affine Coupling layer
 """
 struct GLOW
     conv
@@ -58,7 +58,7 @@ params(L::GLOW) = Flux.params(L.conv, L.B, L.A.W, L.A.b)
 
 # Sampling from the model
 """
-`sample(pᵤ, A)`
+`sample(pᵤ, L)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
 or any distribution which can be sampled using `rand`

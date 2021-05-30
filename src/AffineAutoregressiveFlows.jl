@@ -1,7 +1,7 @@
 using Flux, Distributions, ForwardDiff, LinearAlgebra, Random
 import Flux.params, Base.eltype
 
-export AffineLayer, params, sample, expected_pdf, τ, inverse_τ, f, eltype
+export lower_ones, AffineLayer, params, sample, expected_pdf, τ, inverse_τ, f, eltype
 
 #Implementing the transformer τ
 #τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
@@ -44,7 +44,14 @@ end
 # Implementing the conditioner using Masked Autoregressive flows
 # h_i = c(s_i) where s_i is vector of z_i where i < D and h1 = c(s1), s1 is the initial condition
 # h_i = {α_i, β_i}, where both are real.
-"Conditioner is a feedforward neural network such that  Conditioner: z -> h"
+
+"""
+Affine Layer with parameters:
+- `W`: Weight of the conditioner
+- `b`: Bias of the conditioner
+
+`AffineLayer` implements the conditioner and the transformation to the input `z`
+"""
 struct AffineLayer{T}
     W::Array{T,2} #DXD matrix
     b::Array{T,1} #Vector of size D

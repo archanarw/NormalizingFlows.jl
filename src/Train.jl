@@ -23,9 +23,9 @@ function train!(rng::AbstractRNG, data, loss, pᵤ, opt, model)
     ps = params(model)
     for i in 1:size(data, 2)
         x = data[:,i]
-        u = oftype(x, rand(rng, pᵤ, size(x)...))
+        u = convert.(eltype(x), rand(rng, pᵤ, size(x)...))
         g = gradient(() -> loss(model, x, u), Flux.params(ps[:]))
-        Flux.update!(opt, ps[:], g)
+        Flux.update!(opt, ps, g)
     end
 end
 
