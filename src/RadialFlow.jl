@@ -36,7 +36,7 @@ RadialFlow(D) = RadialFlow(Random._GLOBAL_RNG, Float64, D)
 params(R::RadialFlow) = Flux.params(R.z₀, [R.α], [R.β])
 
 """
-`sample(pᵤ, R)`
+    `sample(pᵤ, R)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
     or any distribution which can be sampled using `rand`

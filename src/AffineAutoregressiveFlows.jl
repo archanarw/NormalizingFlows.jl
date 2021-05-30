@@ -77,7 +77,7 @@ eltype(A::AffineLayer) = eltype(A.b)
 
 # Sampling from the model
 """
-`sample(pᵤ, A)`
+    `sample(pᵤ, A)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
 or any distribution which can be sampled using `rand`
@@ -94,7 +94,7 @@ sample(pᵤ, A::AffineLayer) = sample(Random.GLOBAL_RNG, pᵤ, A)
 # pdf of the distribution after applying transform
 #p_x = p_u(T^-1(x))|det J_T^-1(x)|
 """
-`expected_pdf(data, p_u, A)`
+    `expected_pdf(data, p_u, A)`
 
 # Inputs 
 - `z` : Value whose probability density is estimated

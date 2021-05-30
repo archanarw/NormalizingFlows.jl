@@ -6,8 +6,8 @@ export affinecouplinglayer, sample, GLOW
 """
 Coupling layer:
 It transforms the input as:
-zᵢ′ = zᵢ for i < d
-zᵢ′ = A(zᵢ) for i >= d where d = D/2
+- zᵢ′ = zᵢ for i < d
+- zᵢ′ = A(zᵢ) for i >= d where d = D/2
 # Inputs - 
 - z : input from trainig data
 - A : AffineLayer of the required size d, i.e., D/2 where
@@ -58,7 +58,7 @@ params(L::GLOW) = Flux.params(L.conv, L.B, L.A.W, L.A.b)
 
 # Sampling from the model
 """
-`sample(pᵤ, L)`
+    `sample(pᵤ, L)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
 or any distribution which can be sampled using `rand`

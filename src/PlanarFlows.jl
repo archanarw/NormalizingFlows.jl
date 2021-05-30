@@ -38,7 +38,7 @@ params(P::PlanarFlow) = Flux.params(P.v, P.w, [P.b])
 eltype(P::PlanarFlow) = eltype(P.v)
 
 """
-`sample(pᵤ, P)`
+    `sample(pᵤ, P)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
     or any distribution which can be sampled using `rand`
