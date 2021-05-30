@@ -8,7 +8,7 @@ Normalizing Flow transforms a simple distribution to a complex distribution by a
 The main idea of flow-based modeling is to express x as a transformation T of a real vector u sampled from pᵤ(u):
 
 ```math
-x = T(u), u ∼ p_{u}(u)
+x = T(u), u ∼ pᵤ(u)
 ```
 
 ## Installation
@@ -39,11 +39,18 @@ They are of the form: z' = Wz where W is a D×D invertible matrix that parameter
 * Residual Flows -
 ⁠ They are of the form: z₀ = z + g_φ(z) where g_φ is a function that outputs a D-dimensional translation vector, parameterized by φ.
 The two types of residual flows implemented are:
-`PlanarFlows`: Here, the function g_{φ} is a one-layer neural network with a single hidden unit: 
-z₀ = z + vσ(w^T z + b) where σ is a differentiable activation function such as the hyperbolic tangent.
+`PlanarFlows`: Here, the function g_{φ} is a one-layer neural network with a single hidden unit:
+```math 
+z₀ = z + vσ(wᵀz + b)
+``` 
+where σ is a differentiable activation function such as the hyperbolic tangent.
 
 `RadialFlows`: The function g_{φ} is such that
-z' = z + \\frac{β}{α + r(z)} (z - z_{0}), r = ||z - z_{0}|| where ||·|| is the Euclidean norm.
+```math
+z' = z + \\frac{β}{α + r(z)} (z - z₀)
+ r = ||z - z₀||
+```
+where ||·|| is the Euclidean norm.
 
 ## Usage
 
@@ -51,4 +58,6 @@ z' = z + \\frac{β}{α + r(z)} (z - z_{0}), r = ||z - z_{0}|| where ||·|| is th
 julia> using NormalizingFlows
 ```
 
-<!-- ### Construction and Evaluation -->
+### Examples
+
+Examlpes of contruction of the models, training and sampling on MNIST dataset can be viewed [here](examples) 

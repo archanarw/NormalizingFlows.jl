@@ -1,7 +1,7 @@
 using Flux, Distributions, Random
 import Flux.params
 
-export affinecouplinglayer, sample, GLOW
+export affinecouplinglayer, sample, GLOW, params
 
 """
 Coupling layer:
@@ -44,8 +44,6 @@ end
 
 GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
 
-#Actnorm before glow
-#glow includes permutation and affine coupling
 function (L::GLOW)(z)
     conv1x1 = L.conv
     # Flatten after this
