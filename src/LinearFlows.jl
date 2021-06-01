@@ -36,7 +36,6 @@ end
 
 function GLOW(rng::AbstractRNG, T, channels, D)
     conv1x1 = Flux.Conv((1,1), channels => channels, relu)
-    # Flatten after this
     d = div(D,2)
     A = AffineLayer(rng, d, T)
     return GLOW(conv1x1, BatchNorm(channels), A)
@@ -46,7 +45,7 @@ GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
 
 function (L::GLOW)(z)
     conv1x1 = L.conv
-    # Flatten after this
+    # Flatten after BatchNorm
     A = L.A
     coupling = z -> affinecouplinglayer(z,A)
     return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
