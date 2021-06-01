@@ -4,7 +4,7 @@ makedocs(
     sitename = "NormalizingFlows.jl",
     pages = [
         "Home" => "index.md",
-        "Getting Started" => "gettingstarted.md"
+        "Getting Started" => "gettingstarted.md",
         "Functions" => "functions.md"
     ]
 )
