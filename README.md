@@ -10,7 +10,7 @@ The main idea of flow-based modeling is to express x as a transformation T of a 
 ```math
 x = T(u), u ∼ pᵤ(u)
 ```
-The package `NormalizingFlows.jl` implements training and generation of samples for the normalizing flow models - 
+The package `NormalizingFlows.jl` implements training and generation of samples for the following normalizing flow models - 
 - Affine Autoregressive Flows
 - Linear Flows
 - Planar Flows
