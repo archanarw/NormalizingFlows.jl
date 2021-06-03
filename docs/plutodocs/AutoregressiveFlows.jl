@@ -172,15 +172,15 @@ md"Values after applying tranformation to all elements -"
 
 # ╔═╡ 1fa27f83-29e7-48b5-9461-1e19741bc824
 begin
-	z = rand(7)
+	z = rand(5)
 	A(z)
 end
 
 # ╔═╡ ee32779d-425c-4ebc-93b3-ef6243a53bcf
-md"The function `f` applies the transformer($T$) or inverse($T'$) to the values of $z$-"
+md"The function `apply_transform` applies the transformer($T$) or inverse($T'$) to the values of $z$ -"
 
 # ╔═╡ 3843a662-7123-4cc9-99ac-11936fca38f1
-f(A, inverse_τ, z)
+apply_transform(A, inverse_τ, z)
 
 # ╔═╡ 71ade19b-b4f8-493d-97db-5160d7fdd741
 md"Training"
@@ -210,7 +210,7 @@ md"`sample(pᵤ, A)` takes the base distribution and affine layer as inputs and 
 md"Esimating the density"
 
 # ╔═╡ d400578f-f326-4d09-87f9-05ef698cd6ae
-md"`expected_pdf(z, pᵤ, A)` takes the base distribution, affine layer and the value whose density is to be esitmated and outputs the probability density of `z` according to the density function generated."
+md"`pdf(z, pᵤ, A)` takes the base distribution, affine layer and the value whose density is to be esitmated and outputs the probability density of `z` according to the density function generated."
 
 # ╔═╡ Cell order:
 # ╟─ea9afae0-9954-11eb-155e-5f4c0043af56
@@ -242,9 +242,9 @@ md"`expected_pdf(z, pᵤ, A)` takes the base distribution, affine layer and the 
 # ╟─4838b626-14ae-4b2d-b6b2-88a1daa62736
 # ╠═d06a4a43-6be9-48fb-bd77-b9d989faf2e7
 # ╟─7ae0927c-2338-4902-9de9-fd74caa75652
-# ╟─1fa27f83-29e7-48b5-9461-1e19741bc824
+# ╠═1fa27f83-29e7-48b5-9461-1e19741bc824
 # ╟─ee32779d-425c-4ebc-93b3-ef6243a53bcf
-# ╟─3843a662-7123-4cc9-99ac-11936fca38f1
+# ╠═3843a662-7123-4cc9-99ac-11936fca38f1
 # ╟─71ade19b-b4f8-493d-97db-5160d7fdd741
 # ╟─05e07cc5-4b34-47ec-b3be-2390554e88f4
 # ╟─512a4768-9481-422b-aae2-978f2c57bcdf

@@ -3,13 +3,18 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/dev)
 
-Normalizing Flow transforms a simple distribution to a complex distribution by applying a series of neural networks. Density estimation and statistical inference can be done using Normalizing Flow. Given the samples, the density function from which the samples were generated can be retrieved and further used for statistical inference.
+Normalizing Flows transform a simple distribution into a complex distribution by applying a series of neural networks to the base distribution. A sample from a complex (multi-modal) distribution can be obtained from a simple base distribution (e.g. Uniform) using normalizing flows. In a normalizing flow model, the transformation is invertible and differentiable, thus allowing efficient computation of the density of any value in the domain of the distribution. Given any dataset, the density can be computed and used for further statistical inference.
 
 The main idea of flow-based modeling is to express x as a transformation T of a real vector u sampled from pᵤ(u):
 
 ```math
 x = T(u), u ∼ pᵤ(u)
 ```
+The package `NormalizingFlows.jl` implements training and generation of samples for the normalizing flow models - 
+- Affine Autoregressive Flows
+- Linear Flows
+- Planar Flows
+- Radial Flows
 
 ## Installation
 
@@ -17,7 +22,8 @@ x = T(u), u ∼ pᵤ(u)
 (@v1.5) pkg> clone(https://github.com/archanarw/NormalizingFlows.jl)
 ```
 
-## Available Types of [Normalizing Flows](https://arxiv.org/pdf/1912.02762.pdf)
+## Available Types of Normalizing Flows
+See [here](https://arxiv.org/pdf/1912.02762.pdf) for a review on normalizing flows.
 
 * Autoregressive Flows –⁠ 
 Autoregressive flows specifies the transformation to have the following form:
@@ -40,13 +46,13 @@ They are of the form: z' = Wz where W is a D×D invertible matrix that parameter
 ⁠ They are of the form: z₀ = z + g_φ(z) where g_φ is a function that outputs a D-dimensional translation vector, parameterized by φ.
 The two types of residual flows implemented are:
 
-`PlanarFlows`: Here, the function g_{φ} is a one-layer neural network with a single hidden unit:
+`PlanarFlows`- Here, the function g_{φ} is a one-layer neural network with a single hidden unit:
 ```math 
 z₀ = z + vσ(wᵀz + b)
 ``` 
 where σ is a differentiable activation function such as the hyperbolic tangent.
 
-`RadialFlows`: The function g_{φ} is such that
+`RadialFlows`- The function g_{φ} is such that
 ```math
 z' = z + \\frac{β}{α + r(z)} (z - z₀)
  r = ||z - z₀||
@@ -61,4 +67,4 @@ julia> using NormalizingFlows
 
 ### Examples
 
-Examlpes of contruction of the models, training and sampling on MNIST dataset can be viewed [here](examples) 
+Examples of contruction of the models, training and sampling on MNIST dataset can be viewed [here](examples).

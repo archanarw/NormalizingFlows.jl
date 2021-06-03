@@ -34,6 +34,7 @@ model = AffineLayer(rng, 3, Float32)
 z = randn(rng, 3)
 @test size.(NormalizingFlows.params(model)) == [(3, 3), (3,)]
 @test size(model(z)) == size(z)
+@inferred model(z)
 
 ##################################################################
 
