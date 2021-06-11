@@ -1,12 +1,13 @@
 # NormalizingFlows.jl
 
-Normalizing Flow transforms a simple distribution to a complex distribution by applying a series of neural networks. Density estimation and statistical inference can be done using Normalizing Flow. Given the samples, the density function from which the samples were generated can be retrieved and further used for statistical inference.
+`NormalizingFlows.jl` is a julia package that allows you to construct and train a special kind of neural network called a *normalizing flow*.
 
-The main idea of flow-based modeling is to express x as a transformation T of a real vector u sampled from pᵤ(u):
+A normalizing flow transforms a simple distribution into a complex distribution by applying a sequence of transformations. Each transformation is a special kind of neural network that is invertible and differentiable. By composing many of these transformations together, we can construct arbitrarily complex probability distributions that: 
+- can efficiently sampled from
+- allow efficient computation of the density of any value in the domain of the distribution
 
-```math
-x = T(u), u ∼ pᵤ(u)
-```
+There are many potential use cases for a normalizing flow. One particularly important use case is training a generative model, i.e., updating the parameters of a normalizing flow so that it models a given dataset.
+
 
 ## Outline
 

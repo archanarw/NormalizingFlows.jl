@@ -3,23 +3,19 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/dev)
 
-Normalizing Flows transform a simple distribution into a complex distribution by applying a series of neural networks to the base distribution. A sample from a complex (multi-modal) distribution can be obtained from a simple base distribution (e.g. Uniform) using normalizing flows. In a normalizing flow model, the transformation is invertible and differentiable, thus allowing efficient computation of the density of any value in the domain of the distribution. Given any dataset, the density can be computed and used for further statistical inference.
+`NormalizingFlows.jl` is a julia package that allows you to construct and train a special kind of neural network called a *normalizing flow*.
 
-The main idea of flow-based modeling is to express x as a transformation T of a real vector u sampled from pᵤ(u):
+A normalizing flow transforms a simple distribution into a complex distribution by applying a sequence of transformations. Each transformation is a special kind of neural network that is invertible and differentiable. By composing many of these transformations together, we can construct arbitrarily complex probability distributions that: 
+- can efficiently sampled from
+- allow efficient computation of the density of any value in the domain of the distribution
 
-```math
-x = T(u), u ∼ pᵤ(u)
-```
-The package `NormalizingFlows.jl` implements training and generation of samples for the following normalizing flow models - 
-- Affine Autoregressive Flows
-- Linear Flows
-- Planar Flows
-- Radial Flows
+There are many potential use cases for a normalizing flow. One particularly important use case is training a generative model, i.e., updating the parameters of a normalizing flow so that it models a given dataset.
+
 
 ## Installation
 
 ```julia
-(@v1.5) pkg> clone(https://github.com/archanarw/NormalizingFlows.jl)
+(@v1.5) pkg> add https://github.com/archanarw/NormalizingFlows.jl
 ```
 
 ## Available Types of Normalizing Flows

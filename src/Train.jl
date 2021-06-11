@@ -60,25 +60,25 @@ Returns trained models for each category in the labels. The trained models tranf
 - `epochs`: Number of times `train!` runs
 """
 function train_labelled_data!(rng::AbstractRNG, data_loader, loss, pᵤ, opt, model, epochs)
-    train = [(x,y) for (x,y) in data_loader]
-    sort!(train, by = x -> x[2])
+    train = [(x, y) for (x, y) in data_loader]
+    sort!(train, by=x -> x[2])
     curr = 0
-    while (curr != train[end][2]+1)
+    while (curr != train[end][2] + 1)
         x_curr = []
-        for (x,y) in train
-            if y == [curr+1]
-                curr+=1
+        for (x, y) in train
+            if y == [curr + 1]
+                curr += 1
                 break
             end
             push!(t, x)
         end
         for i in 1:epochs
-            train!(rng, x_curr, pᵤ, loss, opt, model[curr+1])
+            train!(rng, x_curr, pᵤ, loss, opt, model[curr + 1])
         end
     end
 end
 
-train_labelled_data!(data_loader, pᵤ,loss, opt, model, epochs) = train_labelled_data!(Random.GLOBAL_RNG, data_loader,loss, pᵤ, opt, model, epochs)
+train_labelled_data!(data_loader, pᵤ,loss, opt, model, epochs) = train_labelled_data!(Random.GLOBAL_RNG, data_loader, loss, pᵤ, opt, model, epochs)
 
 "KL Divergence"
 function loss_kl(model, x, u)

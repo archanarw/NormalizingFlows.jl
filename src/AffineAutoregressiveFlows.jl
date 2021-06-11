@@ -3,10 +3,10 @@ import Flux.params, Base.eltype, StatsBase.sample, Distributions.pdf, Distributi
 
 export lower_ones, AffineLayer, params, sample, pdf, τ, inverse_τ, apply_transform
 
-#Implementing the transformer τ
-#τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
-τ(z, h) = exp(h.α[1])*z + h.β
-inverse_τ(z,h) = inv(exp(h.α[1]))*z - h.β*inv(exp(h.α))
+# Implementing the transformer τ
+# τ(z_i, h_i) = α_i*z_i + β_i where α_i must be non-zero, h_i = {α_i, β_i}, h_i = c(s_i)
+τ(z, h) = exp(h.α[1]) * z + h.β
+inverse_τ(z,h) = inv(exp(h.α[1])) * z - h.β * inv(exp(h.α))
 
 "Returns lower triangular square matrix of size k whose values are 1"
 function lower_ones(T, k::Integer)
@@ -15,9 +15,9 @@ end
 
 function islower_ones(T, k)
     arr = lower_ones(T, k)
-    for i in 1:size(arr,1)
-        for j in 1:size(arr,2)
-            if i<j
+    for i in 1:size(arr, 1)
+        for j in 1:size(arr, 2)
+            if i < j
                 if arr[i,j] != zero(T)
                     return false
                 end
@@ -47,25 +47,25 @@ Affine Layer with parameters:
 
 `AffineLayer` implements the conditioner and the transformation to the input `z`
 """
-struct AffineLayer{U <: AbstractArray{<: Real}, V <: AbstractArray{<: Real}}
-    W::U #DXD matrix
-    b::V #Vector of size D
+struct AffineLayer{U <: AbstractArray{<: Real},V <: AbstractArray{<: Real}}
+    W::U # DXD matrix
+    b::V # Vector of size D
 end
 
 function AffineLayer(rng::AbstractRNG, K::Integer, T)
     m::AbstractArray{T,2} = rand(rng, K, K)
     mask = lower_ones(T, K)
-    m = m.*mask
+    m = m .* mask
     AffineLayer(m, rand(rng, T, K))
 end
 
 AffineLayer(K::Integer) = AffineLayer(Random.GLOBAL_RNG, K, Float64)
 
 function apply_transform(A::AffineLayer, transform, z)
-    return [transform(z[i], (α = (transpose(A.W[:,i]))*z, β = A.b[i])) for i in 1:length(z)]
+    return [transform(z[i], (α = (transpose(A.W[:,i])) * z, β = A.b[i])) for i in 1:length(z)]
 end
 
-(A::AffineLayer)(z) = apply_transform(A,τ,z)
+(A::AffineLayer)(z) = apply_transform(A, τ, z)
 
 params(A::AffineLayer) = Flux.params(A.W, A.b)
 eltype(A::AffineLayer) = eltype(A.b)
@@ -88,7 +88,7 @@ end
 StatsBase.sample(pᵤ, A::AffineLayer) = sample(Random.GLOBAL_RNG, pᵤ, A)
 
 # pdf of the distribution after applying transform
-#p_x = p_u(T^-1(x))|det J_T^-1(x)|
+# p_x = p_u(T^-1(x))|det J_T^-1(x)|
 """
     `pdf(z, pᵤ, A)`
 
@@ -101,9 +101,9 @@ or any distribution whose density can be evaluated using `pdf`
 # Returns the probability density of `z` wrt to the distribution given by A
 """
 function Distributions.pdf(z, pᵤ, A)
-    j = prod([exp((transpose(A.W[:,i]))*z) for i in 1:length(z)]) #Jacobian
+    j = prod([exp((transpose(A.W[:,i])) * z) for i in 1:length(z)]) # Jacobian
     t = apply_transform(A, inverse_τ, z)
-    return pdf(pᵤ, t)/abs(det(j))
+    return pdf(pᵤ, t) / abs(det(j))
 end
 
 """
@@ -118,7 +118,7 @@ or any distribution whose density can be evaluated using `pdf`
 # Returns the probability density of `z` wrt to the distribution given by A
 """
 function Distributions.logpdf(z, pᵤ, A)
-    j = sum([(transpose(A.W[:,i]))*z for i in 1:length(z)]) #log absolute Jacobian determinant
+    j = sum([(transpose(A.W[:,i])) * z for i in 1:length(z)]) # log absolute Jacobian determinant
     t = apply_transform(A, inverse_τ, z)
-    return logpdf(pᵤ, t)+ j
+    return logpdf(pᵤ, t) + j
 end

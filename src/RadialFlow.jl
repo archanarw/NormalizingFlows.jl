@@ -31,7 +31,7 @@ end
 
 RadialFlow(D) = RadialFlow(Random._GLOBAL_RNG, Float64, D)
 
-(R::RadialFlow)(z) = z .+ (R.β ./ (R.α .+ norm(z))).*(z .- R.z₀)
+(R::RadialFlow)(z) = z .+ (R.β ./ (R.α .+ norm(z))) .* (z .- R.z₀)
 
 params(R::RadialFlow) = Flux.params(R.z₀, [R.α], [R.β])
 

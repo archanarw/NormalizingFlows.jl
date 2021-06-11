@@ -17,9 +17,9 @@ z′ = z + vσ(wᵀz + b) where σ is an activation function such as tanh,
 This flow can be interpreted as expanding/contracting
 the space in the direction perpendicular to the hyperplane wᵀz + b = 0
 """
-struct PlanarFlow{T}
-    v::Array{T, 1}
-    w::Array{T, 1}
+    struct PlanarFlow{T}
+    v::Array{T,1}
+    w::Array{T,1}
     b::T
 end
 
@@ -27,12 +27,12 @@ function PlanarFlow(rng::AbstractRNG, T, D)
     v = rand(rng, T, D)
     w = rand(rng, T, D)
     b = rand(rng, T)
-    return PlanarFlow(v,w,b)
+    return PlanarFlow(v, w, b)
 end
 
 PlanarFlow(D) = PlanarFlow(Random._GLOBAL_RNG, Float64, D)
 
-(P::PlanarFlow)(z) = z .+ P.v .* tanh.((P.w)'*z .+ P.b)
+(P::PlanarFlow)(z) = z .+ P.v .* tanh.((P.w)' * z .+ P.b)
 
 params(P::PlanarFlow) = Flux.params(P.v, P.w, [P.b])
 eltype(P::PlanarFlow) = eltype(P.v)

@@ -14,7 +14,7 @@ function is_lower(A)
         return false
     end
     for i in 1:k
-        for j in (i+1):k
+        for j in (i + 1):k
             if A[i,j] != zero(eltype(A))
                 return false
             end
@@ -23,7 +23,7 @@ function is_lower(A)
     return true
 end
 
-@test size(AffineLayer(rng, 3, Float32).W) == (3,3)
+@test size(AffineLayer(rng, 3, Float32).W) == (3, 3)
 @test size(AffineLayer(rng, 3, Float32).b) == (3,)
 @test eltype(AffineLayer(rng, 3, Float32).W) == Float32
 @test is_lower(AffineLayer(rng, 3, Float32).W)

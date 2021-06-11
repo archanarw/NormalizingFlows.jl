@@ -3,7 +3,7 @@
 ## Installation
 
 ```
-Pkg.clone(https://github.com/archanarw/NormalizingFlows.jl)
+(@v1.5) pkg> add https://github.com/archanarw/NormalizingFlows.jl
 ```
 
 ## Usage

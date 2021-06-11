@@ -14,10 +14,10 @@ It transforms the input as:
     D is the size of input data
 """
 function affinecouplinglayer(z, A::AffineLayer)
-    D = size(z,1)
-    d = div(D,2)
+    D = size(z, 1)
+    d = div(D, 2)
     z′ = z[1:d]
-    z′ = vcat(z′, A(z[(d+1):end]))
+    z′ = vcat(z′, A(z[(d + 1):end]))
     return z′
 end
 
@@ -35,8 +35,8 @@ struct GLOW
 end
 
 function GLOW(rng::AbstractRNG, T, channels, D)
-    conv1x1 = Flux.Conv((1,1), channels => channels, relu)
-    d = div(D,2)
+    conv1x1 = Flux.Conv((1, 1), channels => channels, relu)
+    d = div(D, 2)
     A = AffineLayer(rng, d, T)
     return GLOW(conv1x1, BatchNorm(channels), A)
 end
@@ -47,7 +47,7 @@ function (L::GLOW)(z)
     conv1x1 = L.conv
     # Flatten after BatchNorm
     A = L.A
-    coupling = z -> affinecouplinglayer(z,A)
+    coupling = z -> affinecouplinglayer(z, A)
     return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
 end
 
@@ -62,7 +62,7 @@ or any distribution which can be sampled using `rand`
 - L : Linear Flow
 """
 function sample(rng::AbstractRNG, pᵤ, channels, L::GLOW)
-    l = Int(sqrt(size(L.A.b, 1)*2))
+    l = Int(sqrt(size(L.A.b, 1) * 2))
     u = rand(rng, pᵤ, l, l, channels, 1)
     return L(u)
 end
