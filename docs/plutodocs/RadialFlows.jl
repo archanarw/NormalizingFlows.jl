@@ -1,52 +1,31 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.8
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ 0789eb59-99c4-4051-a327-57dd0a6bdb7a
 begin
-	using NormalizingFlows
-	P = RadialFlow(4)
+	using NormalizingFlows, Random
+	rng = Random.seed!(123)
+	R = RadialFlow(rng, Float64, 4)
 end
 
-# ╔═╡ 1c9982d8-61b6-4a3d-a44e-e953a2b6163a
+# ╔═╡ 13ada439-52d5-47f7-bf06-3d78f8ae3558
 begin
-	using Flux, Distributions
-	using MLDatasets, Plots
-	using Random
-
-	rng = MersenneTwister(0)
-	xtrain, ytrain = MLDatasets.MNIST.traindata(Float32)
-	xtrain = Flux.flatten(xtrain)
-	train_loader = Flux.Data.DataLoader((xtrain, ytrain))
-
-	t = [(x,y) for (x,y) in train_loader]
-	sort!(t, by = x-> x[2])
-	t1 = []
-	for (x,y) in t
-		if y == [1]
-			break
+	using Distributions, Plots
+	function image_sine(n)
+		x = sin.(π/n:(π/n):π)
+		arr = x
+		for i in 1:(n-1)
+			arr = hcat(arr, x)
 		end
-		push!(t1, (x,y))
+		return arr
 	end
-
-	x_0 = [x for (x, y) in t1]
-
-	opt = Flux.ADAM(0.001)
-	pᵤ = Uniform(0,1)
-	model = RadialFlow(rng, Float32, 28^2)
-
-	for i in 1:20
-		train!(rng, x_0, loss_kl, pᵤ, opt, model)
-	end
-
-	s = NormalizingFlows.sample(rng, pᵤ, model)
-	heatmap(reshape(abs.(s), 28, 28))
 end
 
 # ╔═╡ 19b66242-c111-11eb-2a7f-c1f51fc654c0
-md"## Normalizing Flows: Radial Flows"
+md"## Radial Flows"
 
 # ╔═╡ 43efe91a-2b82-4c94-be3f-3bd8d9b196cc
 md"Radial flows use functions of form
@@ -73,14 +52,57 @@ $det J_{f_{\phi}}(z) = (1 + \frac{αβ}{(α + r(z))^{2}})(1+ \frac{β}{α + r(z)
 # ╔═╡ 3e542f27-e74c-4e1f-9c19-643960465405
 md"###### Model:"
 
+# ╔═╡ 96f08283-f755-4386-a600-4928602b8bf8
+md"###### Dataset:"
+
+# ╔═╡ 51bfe441-0cea-48f3-906a-2cd7d7fb9385
+n = 10 #Number of rows/columns in the image
+
+# ╔═╡ 64ea179b-ef26-48f5-9e40-36a49ed9f948
+begin
+	using Flux
+	opt = Flux.Descent(0.01)
+	model = NormalizingFlows.RadialFlow(rng, Float64, n*n)
+end
+
+# ╔═╡ 8a5824e3-4d6c-4745-84f5-560e0ff4c8ef
+heatmap(image_sine(n))
+
+# ╔═╡ 71fc4b3c-53e4-4b5a-ad6a-70aef01c1b63
+begin
+	data = reshape(image_sine(n), n*n, 1)
+	for i in 1:2000
+		data = hcat(data, reshape(image_sine(n), n*n, 1))
+	end
+end
+
 # ╔═╡ ceac6461-8c93-4bcd-9641-17e02e532351
 md"###### Training:"
+
+# ╔═╡ 06dd3688-53e9-4630-98ab-637faac37a27
+begin
+	p = Uniform(0, 1)
+	heatmap(rand(p, 10, 10))
+end
+
+# ╔═╡ 1f05b288-b663-47a2-b1e3-4b52b7a3cd95
+begin
+	for i in 1:50
+    	train!(data, loss_kl, p, opt, model)
+	end
+end
 
 # ╔═╡ b85b60f1-2acf-47aa-9d09-81ecd12c82e0
 md"###### Sampling:"
 
 # ╔═╡ c435355c-6a6c-4562-95ca-bc01ca9cc1fb
 md"`sample(pᵤ, R)` takes the base distribution and radial flow model as inputs and outputs a sample of the density from which the input samples were generated."
+
+# ╔═╡ 171f4c02-3f01-4222-bd86-9dac62cd5a2e
+begin
+	s = NormalizingFlows.sample(rng, p, model)
+	heatmap((reshape(abs.(s), n, n)))
+end
 
 # ╔═╡ Cell order:
 # ╟─19b66242-c111-11eb-2a7f-c1f51fc654c0
@@ -91,7 +113,15 @@ md"`sample(pᵤ, R)` takes the base distribution and radial flow model as inputs
 # ╟─58742bd0-eefe-421b-b3d1-4f48464071e5
 # ╟─3e542f27-e74c-4e1f-9c19-643960465405
 # ╠═0789eb59-99c4-4051-a327-57dd0a6bdb7a
+# ╟─96f08283-f755-4386-a600-4928602b8bf8
+# ╠═13ada439-52d5-47f7-bf06-3d78f8ae3558
+# ╠═51bfe441-0cea-48f3-906a-2cd7d7fb9385
+# ╠═8a5824e3-4d6c-4745-84f5-560e0ff4c8ef
+# ╠═71fc4b3c-53e4-4b5a-ad6a-70aef01c1b63
 # ╟─ceac6461-8c93-4bcd-9641-17e02e532351
-# ╠═1c9982d8-61b6-4a3d-a44e-e953a2b6163a
+# ╠═06dd3688-53e9-4630-98ab-637faac37a27
+# ╠═64ea179b-ef26-48f5-9e40-36a49ed9f948
+# ╠═1f05b288-b663-47a2-b1e3-4b52b7a3cd95
 # ╟─b85b60f1-2acf-47aa-9d09-81ecd12c82e0
 # ╟─c435355c-6a6c-4562-95ca-bc01ca9cc1fb
+# ╠═171f4c02-3f01-4222-bd86-9dac62cd5a2e

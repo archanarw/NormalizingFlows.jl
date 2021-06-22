@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.8
 
 using Markdown
 using InteractiveUtils
@@ -7,56 +7,18 @@ using InteractiveUtils
 # ╔═╡ b9d9fc20-194d-4644-a5fb-508147d5a1d9
 using NormalizingFlows
 
-# ╔═╡ a1209856-bc83-46f1-99f0-d877196fe810
+# ╔═╡ 6090dde1-7d21-4507-ad95-b3d1b2d0de6c
 begin
-	using Flux, Distributions
-	using MLDatasets, Plots
-	using Random
-
-	rng = MersenneTwister(0)
-	
-	xtrain, ytrain = MLDatasets.MNIST.traindata(Float32);
-	
-	xtrain = Flux.flatten(xtrain);
-
-	train_loader = Flux.Data.DataLoader((xtrain, ytrain));
-
-	t = [(x,y) for (x,y) in train_loader]
-	sort!(t, by = x-> x[2])
-	t1 = []
-	for (x,y) in t
-    	if y == [1]
-        	break
-    	end
-    	push!(t1, (x,y))
+	using Distributions, Plots
+	function image_sine(n)
+		x = sin.(π/n:(π/n):π)
+		arr = x
+		for i in 1:(n-1)
+			arr = hcat(arr, x)
+		end
+		return arr
 	end
-
-	local x_0 = t1[1][1]
-	for (x,y) in t1[2:end]
-    	x_0 = hcat(x_0, x)
-	end
-
-	opt = Flux.Descent(0.0001)
-	pᵤ = Uniform(0,1)
-	model = NormalizingFlows.AffineLayer(rng, 784, Float32)
-
-	# for i in 1:10
-    	train!(rng, x_0[:, 1:3000], loss_kl, pᵤ, opt, model)
-	# end
-
-	s = NormalizingFlows.sample(rng, pᵤ, model)
-	heatmap(reshape(abs.(s), 28, 28))
-
 end
-
-# ╔═╡ ea9afae0-9954-11eb-155e-5f4c0043af56
-md"## Normalizing Flows"
-
-# ╔═╡ c14b9b1d-7361-47b3-8a96-f4f0f9ad1162
-md"Normalizing Flow transforms a simple distribution to a complex distribution by applying a series of neural networks."
-
-# ╔═╡ 0c6e5a98-d161-4592-a7cb-1df16491498d
-md"Density estimation and statistical inference can be done using Normalizing Flow. Given the samples, the density function from which the samples were generated can be retrieved and further used for statistical inference."
 
 # ╔═╡ 7a63e583-e9cc-4077-b862-bd8d68eae27b
 md"## Autoregressive Flows"
@@ -66,20 +28,36 @@ md" Notation:
 - $ f_{ϕ}$ is the model (for simplicity, instead of $Tₖ$ or $T⁻¹ₖ$)
 - $ z$ in the input to the transform, $z'$ is the output, irrespective of $Tₖ$ or $T⁻¹ₖ$"
 
+# ╔═╡ b7f36d06-c0d4-4f5a-891d-035634a2ea18
+md" Autoregressive flows specifies $f_{ϕ}$ to have the following form:
+
+$z'_{i} = τ (z_{i}; h_{i})$ 
+$h_{i} = c_{i}(z_{<i})$
+
+where $τ$ is termed the transformer and $c_{i}$ is the $i$-th conditioner, where $i = 1, ..., D$ and $D$ is the size of $z$.
+"
+
+# ╔═╡ 6459d722-c203-4bfb-b1fb-fca1d5d7efd5
+md"Here the conditioner determines the parameters of the transformer, and in turn, can modify the transformer’s behavior. The conditioner does not need to be a bijection."
+
 # ╔═╡ 3bd7d23f-959a-4187-9d2f-cd6b99a9e775
 md"The forward evaluation is:
 
 $zₖ = Tₖ(zₖ₋₁) for  k = 1, . . . , K$
  where:
 
-$z₀ = u$ where $ u$ is sampled from base distribution
+$z₀ = u$ 
 
-$z_{K} = x$ where $ x$ is expected to be a sample of the same distribution as that of the input.
+where $u$ is sampled from base distribution
+
+$z_{K} = x$ 
+
+where $x$ is expected to be a sample of the same distribution as that of the input.
 "
 
 # ╔═╡ 3eaae25e-f1b9-4c45-b64e-f561383bb8e9
 md"
-The main idea of flow-based modeling is to express $ x$ as a transformation $ T$ of a real vector $ u$ sampled from $p_{u}(u)$:
+The main idea of flow-based modeling is to express $x$ as a transformation $T$ of a real vector $ u$ sampled from $p_{u}(u)$:
 
 $x = T(u), u ∼ p_{u}(u)$
 "
@@ -90,17 +68,8 @@ md" The PDF of $x$ is
 $p_{x}(x) = p_{u}(T_{-1}(x)) |det(J_{T}₋₁(x))|$
 "
 
-# ╔═╡ b7f36d06-c0d4-4f5a-891d-035634a2ea18
-md" Autoregressive flows specifies $ f_{ϕ}$ to have the following form:
-
-$z'_{i} = τ (z_{i}; h_{i})$ 
-$h_{i} = c_{i}(z_{<i})$
-
-where $τ$ is termed the transformer and $c_{i}$ is the $i$-th conditioner, where $i = 1, ..., D$ and $D$ is the size of $ z$.
-"
-
 # ╔═╡ 7ec7cfb5-c4ae-4634-92dd-0f15a8b16841
-md" The Jacobian of the transform is a lower-triangular matrix (because each $zᵢ'$ does not depend on $zₖ'$ where $k≮i$) whose diagonal elements are the derivatives of the transformer for each of the $ D$ elements of $ z$."
+md" The Jacobian of the transform is a lower-triangular matrix (because each $zᵢ'$ does not depend on $zₖ'$ where $k≮i$) whose diagonal elements are the derivatives of the transformer for each of the $ D$ elements of $z$."
 
 # ╔═╡ ba986db8-3dc6-4eaa-a7bf-530cbcf8064e
 md"#### Implementing the transformer"
@@ -189,22 +158,56 @@ md"Training"
 md"`train!(rng, data, pᵤ, opt, model)` is used to train the parameters of the conditioner so that the density function may be learnt."
 
 # ╔═╡ 512a4768-9481-422b-aae2-978f2c57bcdf
-md"For each data point ($z$) in `data`, the divergence between induced distribution,  $p_{x}(x, θ)$ and target distribution, $p_{x}^{*}(x)$ needs to be minimized. Here, the KL divergence between the base distribution, `pᵤ` and induced distribution, $pᵤ^{*}$ is minimized. This can be done since :"
+md"For each data point ($z$) in `data`, the divergence between induced distribution,  $p_{x}(x, θ)$ and target distribution, $p_{x}^{*}(x)$ is minimized. "
 
-# ╔═╡ e6654b63-103c-4445-b0b8-20bc5a496a63
-md" $D_{KL}[p_{x}(x; θ) || p_{x}^{*}(x)] = D_{KL}[ p_{u}(u) || p_{u}^{*}(u; ψ)]$ "
+# ╔═╡ cc3166d9-427d-42d7-a094-ed245292433e
+n = 10 #Number of rows/columns in the image
 
-# ╔═╡ 05beb8fe-affc-44ba-ad02-1fe24cf7261a
-md" where $p_{x}(x; θ)$ is the expected distribution of input, $p_{x}^{*}(x)$ is the target distribution, $p_{u}(u)$ is the base distribution and $p_{u}^{*}(u; ψ)$ is the inverse of target distribution."
+# ╔═╡ 2e73e793-bfe5-4de6-a9d8-59cc65758904
+begin
+	using Flux
+	opt = Flux.Descent(0.01)
+	model = NormalizingFlows.AffineLayer(n*n)
+end
 
-# ╔═╡ bf8de31a-45ad-4b5c-9374-2b56f734fc90
-md"Sampling the image for '0' from MNIST dataset :"
+# ╔═╡ 6bc33096-a59d-42ed-aa3a-304f387f6526
+heatmap(image_sine(n))
+
+# ╔═╡ 4ec794f9-93d3-4ecc-a2eb-3fdd1af70d5d
+begin
+	data = reshape(image_sine(n), n*n, 1)
+	for i in 1:1000
+		data = hcat(data, reshape(image_sine(n), n*n, 1))
+	end
+end
+
+# ╔═╡ 1bfd644e-2350-47f0-a719-e75a296e97fc
+md"The base distribution is:"
+
+# ╔═╡ aba2407e-2c12-420c-8779-10839a6bbc5b
+begin
+	p = Uniform(0, 1)
+	heatmap(rand(p, 10, 10))
+end
+
+# ╔═╡ 04ecc79b-7a19-483a-a698-66432b612cf8
+begin
+	for i in 1:50
+    	train!(data, loss_kl, p, opt, model)
+	end
+end
 
 # ╔═╡ e47cf87b-537a-4082-b8c2-223511a48cc6
 md"Sampling"
 
 # ╔═╡ 5a0153e4-f1e5-426b-843a-5b21ee7a92d4
 md"`sample(pᵤ, A)` takes the base distribution and affine layer as inputs and outputs a sample of the density from which the input samples were generated."
+
+# ╔═╡ f9e00b08-aab4-4dba-bf6f-196e95d2bbf2
+begin
+	s = NormalizingFlows.sample(p, model)
+	heatmap((reshape(abs.(s), n, n)))
+end
 
 # ╔═╡ 539512c8-1a64-4899-98f8-e6655f478ee9
 md"Esimating the density"
@@ -213,15 +216,13 @@ md"Esimating the density"
 md"`pdf(z, pᵤ, A)` takes the base distribution, affine layer and the value whose density is to be esitmated and outputs the probability density of `z` according to the density function generated."
 
 # ╔═╡ Cell order:
-# ╟─ea9afae0-9954-11eb-155e-5f4c0043af56
-# ╟─c14b9b1d-7361-47b3-8a96-f4f0f9ad1162
-# ╟─0c6e5a98-d161-4592-a7cb-1df16491498d
 # ╟─7a63e583-e9cc-4077-b862-bd8d68eae27b
 # ╟─856d139a-1fb7-432d-b10d-f331e9b9ec47
+# ╟─b7f36d06-c0d4-4f5a-891d-035634a2ea18
+# ╟─6459d722-c203-4bfb-b1fb-fca1d5d7efd5
 # ╟─3bd7d23f-959a-4187-9d2f-cd6b99a9e775
 # ╟─3eaae25e-f1b9-4c45-b64e-f561383bb8e9
 # ╟─459f27ea-4f31-4d2a-8334-955b9f4f2ae8
-# ╟─b7f36d06-c0d4-4f5a-891d-035634a2ea18
 # ╟─7ec7cfb5-c4ae-4634-92dd-0f15a8b16841
 # ╟─ba986db8-3dc6-4eaa-a7bf-530cbcf8064e
 # ╟─d1aa48df-34fa-4d78-a21e-64e7ab151ce1
@@ -248,11 +249,16 @@ md"`pdf(z, pᵤ, A)` takes the base distribution, affine layer and the value who
 # ╟─71ade19b-b4f8-493d-97db-5160d7fdd741
 # ╟─05e07cc5-4b34-47ec-b3be-2390554e88f4
 # ╟─512a4768-9481-422b-aae2-978f2c57bcdf
-# ╟─e6654b63-103c-4445-b0b8-20bc5a496a63
-# ╟─05beb8fe-affc-44ba-ad02-1fe24cf7261a
-# ╟─bf8de31a-45ad-4b5c-9374-2b56f734fc90
-# ╠═a1209856-bc83-46f1-99f0-d877196fe810
+# ╠═6090dde1-7d21-4507-ad95-b3d1b2d0de6c
+# ╠═cc3166d9-427d-42d7-a094-ed245292433e
+# ╠═6bc33096-a59d-42ed-aa3a-304f387f6526
+# ╠═4ec794f9-93d3-4ecc-a2eb-3fdd1af70d5d
+# ╟─1bfd644e-2350-47f0-a719-e75a296e97fc
+# ╠═aba2407e-2c12-420c-8779-10839a6bbc5b
+# ╠═2e73e793-bfe5-4de6-a9d8-59cc65758904
+# ╠═04ecc79b-7a19-483a-a698-66432b612cf8
 # ╟─e47cf87b-537a-4082-b8c2-223511a48cc6
 # ╟─5a0153e4-f1e5-426b-843a-5b21ee7a92d4
+# ╠═f9e00b08-aab4-4dba-bf6f-196e95d2bbf2
 # ╟─539512c8-1a64-4899-98f8-e6655f478ee9
 # ╟─d400578f-f326-4d09-87f9-05ef698cd6ae

@@ -16,7 +16,7 @@ It transforms the input as:
 function affinecouplinglayer(z, A::AffineLayer)
     D = size(z, 1)
     d = div(D, 2)
-    z′ = z[1:d]
+    z′ = A(z[1:d])
     z′ = vcat(z′, A(z[(d + 1):end]))
     return z′
 end
@@ -35,7 +35,7 @@ struct GLOW
 end
 
 function GLOW(rng::AbstractRNG, T, channels, D)
-    conv1x1 = Flux.Conv((1, 1), channels => channels, relu)
+    conv1x1 = Flux.Conv((1, 1), channels => channels, relu, init = Flux.orthogonal)
     d = div(D, 2)
     A = AffineLayer(rng, d, T)
     return GLOW(conv1x1, BatchNorm(channels), A)
