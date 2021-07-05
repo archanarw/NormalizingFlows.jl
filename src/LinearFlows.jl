@@ -1,61 +1,69 @@
 using Flux, Distributions, Random
 import Flux.params
 
-export affinecouplinglayer, sample, GLOW
+export affinecouplinglayer, sample, GLOW, params
 
-# GLOW has 3 layers:
-# First - Actnorm(Autoregressive layer with batch normalization)
-# Second - Conv1x1 layer (for ease of finding inverse : W = PLU, 
-#                       where P is a fixed permutation layer, L and U are learnt)
-# Third - Coupling layer
-
+"""
+Coupling layer:
+It transforms the input as:
+- zᵢ′ = zᵢ for i < d
+- zᵢ′ = A(zᵢ) for i >= d where d = D/2
+# Inputs - 
+- z : input from trainig data
+- A : AffineLayer of the required size d, i.e., D/2 where
+    D is the size of input data
+"""
 function affinecouplinglayer(z, A::AffineLayer)
-    D = size(z,1)
-    d = div(D,2)
-    z′ = z[1:d]
-    z′ = vcat(z′, A(z[1:d]))
+    D = size(z, 1)
+    d = div(D, 2)
+    z′ = A(z[1:d])
+    z′ = vcat(z′, A(z[(d + 1):end]))
     return z′
 end
 
+"""
+GLOW has 3 layers:
+First - Conv1x1 layer (for ease of finding inverse : W = PLU, 
+                      where P is a fixed permutation layer, L and U are learnt)
+Second - Normalization
+Third - Affine Coupling layer
+"""
 struct GLOW
-    B
     conv
+    B
     A::AffineLayer
 end
 
 function GLOW(rng::AbstractRNG, T, channels, D)
-    conv1x1 = Flux.Conv((1,1), channels => channels, relu)
-    # Flatten after this
-    d = div(D,2)
-    A = AffineLayer(Conditioner(rng, d, T))
-    return GLOW(BatchNorm(channels), conv1x1, A)
+    conv1x1 = Flux.Conv((1, 1), channels => channels, relu, init = Flux.orthogonal)
+    d = div(D, 2)
+    A = AffineLayer(rng, d, T)
+    return GLOW(conv1x1, BatchNorm(channels), A)
 end
 
 GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
 
-#Actnorm before glow
-#glow includes permutation and affine coupling
-function (L::GLOW)()
+function (L::GLOW)(z)
     conv1x1 = L.conv
-    # Flatten after this
+    # Flatten after BatchNorm
     A = L.A
-    coupling = z -> affinecouplinglayer(z,A)
-    return Chain(L.B, conv1x1, flatten, coupling, softmax)
+    coupling = z -> affinecouplinglayer(z, A)
+    return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
 end
 
-params(L::GLOW) = Flux.params(L.B, L.conv, L.A.c.W, L.A.c.b)
+params(L::GLOW) = Flux.params(L.conv, L.B, L.A.W, L.A.b)
 
 # Sampling from the model
 """
-`sample(pᵤ, A)`
+    `sample(pᵤ, L)`
 # Inputs - 
 - pᵤ : Base distribution which may be from the package Distributions
 or any distribution which can be sampled using `rand`
 - L : Linear Flow
 """
-function sample(rng::AbstractRNG, pᵤ, L::GLOW)
-    l = size(L.A.c.b)
-    u = rand(rng, pᵤ, l)
+function sample(rng::AbstractRNG, pᵤ, channels, L::GLOW)
+    l = Int(sqrt(size(L.A.b, 1) * 2))
+    u = rand(rng, pᵤ, l, l, channels, 1)
     return L(u)
 end
 
