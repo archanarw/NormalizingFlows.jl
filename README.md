@@ -1,7 +1,6 @@
 # NormalizingFlows.jl
 
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/dev)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://archanarw.github.io/NormalizingFlows.jl/)
 
 `NormalizingFlows.jl` is a julia package that allows you to construct and train a special kind of neural network called a *normalizing flow*.
 
