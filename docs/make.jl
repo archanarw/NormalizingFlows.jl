@@ -10,4 +10,5 @@ makedocs(
 )
 deploydocs(
     repo = "github.com/archanarw/NormalizingFlows.jl.git",
+    devbranch = "main"
 )
