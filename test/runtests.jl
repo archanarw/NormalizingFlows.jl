@@ -13,7 +13,7 @@ end
 end
 
 @testset "Linear Flow" begin
-    model = GLOW(rng, Float32, 1, 6)
+    model = GLOW(1, 6)
     @test size(NormalizingFlows.params(model)[6]) == (3,) # Checking if the coupling layer is half the size of the input
     z = rand(rng, 6)
     c = affinecouplinglayer(z, model.A)
