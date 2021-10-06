@@ -13,11 +13,12 @@ It transforms the input as:
 - A : AffineLayer of the required size d, i.e., D/2 where
     D is the size of input data
 """
-function affinecouplinglayer(z, A::AffineLayer)
-    D = size(z, 1)
-    d = div(D, 2)
-    z′ = A(z[1:d])
-    z′ = vcat(z′, A(z[(d + 1):end]))
+function affinecouplinglayer(z, D)
+    d = size(z, 1)
+    d = div(d, 2)
+    z′ = z[1:d]
+    # z′ = vcat(z′, A(z[(d + 1):end]))
+    z′ = vcat(z′, D(z[1:d]))
     return z′
 end
 
@@ -31,27 +32,29 @@ Third - Affine Coupling layer
 struct GLOW
     conv
     B
-    A::AffineLayer
+    A
 end
 
-function GLOW(rng::AbstractRNG, T, channels, D)
+function GLOW(channels, D)
     conv1x1 = Flux.Conv((1, 1), channels => channels, relu, init = Flux.orthogonal)
     d = div(D, 2)
-    A = AffineLayer(rng, d, T)
+    # A = AffineLayer(rng, d, T)
+    A = Dense(d, d)
     return GLOW(conv1x1, BatchNorm(channels), A)
 end
 
-GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
+# GLOW(channels, D) = GLOW(Random._GLOBAL_RNG, Float64, channels, D)
 
 function (L::GLOW)(z)
-    conv1x1 = L.conv
+    # conv1x1 = L.conv
     # Flatten after BatchNorm
     A = L.A
     coupling = z -> affinecouplinglayer(z, A)
+    conv1x1 = rev ? identity : reverse!
     return Chain(conv1x1, L.B, flatten, coupling, softmax)(z)
 end
 
-params(L::GLOW) = Flux.params(L.conv, L.B, L.A.W, L.A.b)
+params(L::GLOW) = Flux.params(L.conv, L.B, L.A)
 
 # Sampling from the model
 """
